@@ -12,6 +12,7 @@ cd ..
 emcc -O3 --closure=1 \
     -Ilibxml2/include \
     -Ilibxslt \
+    -s MODULARIZE=1 \
     -s TOTAL_MEMORY=128MB \
     -s "EXPORTED_FUNCTIONS=['_malloc', '_free']" \
     -s "EXTRA_EXPORTED_RUNTIME_METHODS=['allocateUTF8', 'UTF8ToString']" \

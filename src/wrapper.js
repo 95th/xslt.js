@@ -1,9 +1,14 @@
-var Xslt = (function () {
-    var Module = {};
+var Xslt = {
+    transform: function() {
+        throw "XSLT Engine not initialized yet"
+    }
+};
 
+(async () => {
     /* XSLT.RAW.JS */
 
-    return {
+    Module = await Module();
+    Xslt = {
         transform: function (xsltFile, xml) {
             if (!xsltFile) {
                 throw "Empty XSLT file name";
@@ -29,5 +34,5 @@ var Xslt = (function () {
                 Module._free(xml_ptr);
             }
         }
-    }
+    };
 })();
