@@ -146,11 +146,8 @@ xsltProcess(xmlDocPtr doc, xsltStylesheetPtr cur)
 
     xmlChar* out = NULL;
     int size = 0;
-    if (xmlStrEqual(cur->method, (const xmlChar *)"html")) {
-        htmlDocDumpMemory(res, &out, &size);
-    } else {
-        xmlDocDumpMemory(res, &out, &size);
-    }
+    // TODO: See xsltSaveToFile to figure out output method
+    htmlDocDumpMemory(res, &out, &size);
 
     xmlFreeDoc(res);
     return (const char*) out;
