@@ -1,0 +1,21 @@
+# Build libxml2
+cd libxml2
+emmake make
+cd ..
+
+
+# Build libxslt
+cd libxslt
+emmake make
+cd ..
+
+emcc -O3 \
+    -Ilibxml2/include \
+    -Ilibxslt \
+    -s TOTAL_MEMORY=128MB \
+    -s "EXPORTED_FUNCTIONS=['allocateUTF8', 'UTF8ToString', '_malloc', '_free']" \
+    src/xslt.c \
+    libxml2/.libs/libxml2.a \
+    libxslt/libxslt/.libs/libxslt.a \
+    libxslt/libexslt/.libs/libexslt.a \
+    -o build/xslt.js
