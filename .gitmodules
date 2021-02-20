@@ -1,0 +1,6 @@
+[submodule "libxml2"]
+	path = libxml2
+	url = https://github.com/GNOME/libxml2
+[submodule "libxslt"]
+	path = libxslt
+	url = https://github.com/GNOME/libxslt
