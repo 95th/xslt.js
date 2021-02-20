@@ -210,10 +210,6 @@ done:
     {
         xsltFreeStylesheet(cur);
     }
-    if (style != NULL)
-    {
-        xmlFreeDoc(style);
-    }
     if (xsl != NULL)
     {
         xmlFree(BAD_CAST xsl);
