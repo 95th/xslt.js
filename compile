@@ -9,13 +9,21 @@ cd libxslt
 emmake make
 cd ..
 
-emcc -O3 \
+emcc -O3 --closure=1 \
     -Ilibxml2/include \
     -Ilibxslt \
     -s TOTAL_MEMORY=128MB \
-    -s "EXPORTED_FUNCTIONS=['allocateUTF8', 'UTF8ToString', '_malloc', '_free']" \
+    -s "EXPORTED_FUNCTIONS=['_malloc', '_free']" \
+    -s "EXTRA_EXPORTED_RUNTIME_METHODS=['allocateUTF8', 'UTF8ToString']" \
     src/xslt.c \
     libxml2/.libs/libxml2.a \
     libxslt/libxslt/.libs/libxslt.a \
     libxslt/libexslt/.libs/libexslt.a \
     -o build/xslt.js
+
+sed '/\/\* XSLT.RAW.JS \*\// {
+	r ./build/xslt.js
+	d
+}' < ./src/wrapper.js > ./build/xslt.new.js
+
+mv ./build/xslt.new.js ./build/xslt.js

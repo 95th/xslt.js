@@ -81,7 +81,6 @@ EM_JS(const char*, xsltprocFetchResource, (const char* url_ptr), {
     req.send();
 
     if (req.status != 200) {
-        console.error(`Request to ${url} failed with ${req.status}`);
         return null;
     }
 
