@@ -1,16 +1,15 @@
-mkdir build
+mkdir -p build
+mkdir -p libxml2/m4
+mkdir -p libxml2/build
 
 # Build libxml2
 cd libxml2
-mkdir m4
-mkdir build
 autoreconf -if -Wall
 emconfigure ./configure CFLAGS="-O3" --with-ftp=off --with-python=off --with-threads=off --disable-shared
-
+cd ..
 
 # Build libxslt
-cd ../libxslt
+cd libxslt
 autoreconf -if -Wall
 emconfigure ./configure CFLAGS="-O3" --with-libxml-src=../libxml2 --with-python=no --disable-shared
-
 cd ..

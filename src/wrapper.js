@@ -16,7 +16,7 @@ const Xslt = (function() {
             var xsl_ptr = Module.allocateUTF8(xsltFile);
             var xml_ptr = Module.allocateUTF8(xml);
             try {
-                var output_ptr = Module._transform(xsl_ptr, xml_ptr);
+                var output_ptr = Module._xsltTransform(xsl_ptr, xml_ptr);
                 if (!output_ptr) {
                     throw "Transformation failed";
                 }

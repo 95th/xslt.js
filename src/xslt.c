@@ -1,9 +1,10 @@
 /*
- * xsltproc.c: user program for the XSL Transformation 1.0 engine
+ * xslt.c: user program for the XSL Transformation 1.0 engine intended to compile to WebAssembly.
  *
  * See Copyright for the status of this software.
  *
  * daniel@veillard.com
+ * Gurwinder Singh <vargwin@gmail.com>
  */
 
 #include <emscripten/emscripten.h>
@@ -20,31 +21,10 @@
 #ifdef HAVE_TIME_H
 #include <time.h>
 #endif
-#ifdef HAVE_SYS_STAT_H
-#include <sys/stat.h>
-#endif
-#ifdef HAVE_UNISTD_H
-#include <unistd.h>
-#endif
-#ifdef HAVE_STDLIB_H
-#include <stdlib.h>
-#endif
-#ifdef HAVE_STDARG_H
-#include <stdarg.h>
-#endif
-#if defined(_WIN32) && !defined(__CYGWIN__)
-#include <fcntl.h>
-#endif
 #include <libxml/xmlmemory.h>
 #include <libxml/debugXML.h>
 #include <libxml/HTMLtree.h>
 #include <libxml/xmlIO.h>
-#ifdef LIBXML_XINCLUDE_ENABLED
-#include <libxml/xinclude.h>
-#endif
-#ifdef LIBXML_CATALOG_ENABLED
-#include <libxml/catalog.h>
-#endif
 #include <libxml/parser.h>
 #include <libxml/parserInternals.h>
 #include <libxml/uri.h>
@@ -58,12 +38,6 @@
 
 #include <libexslt/exsltconfig.h>
 
-#if defined(HAVE_SYS_TIME_H)
-#include <sys/time.h>
-#elif defined(HAVE_TIME_H)
-#include <time.h>
-#endif
-
 #ifdef HAVE_SYS_TIMEB_H
 #include <sys/timeb.h>
 #endif
@@ -74,7 +48,7 @@ static int options = XSLT_PARSE_OPTIONS;
  * Entity loading control and customization.
  */
 
-EM_JS(const char*, xsltprocFetchResource, (const char* url_ptr), {
+EM_JS(const char*, xsltjsFetch, (const char* url_ptr), {
     let url = UTF8ToString(url_ptr);
     let req = new XMLHttpRequest();
     req.open("GET", url, false);
@@ -84,20 +58,17 @@ EM_JS(const char*, xsltprocFetchResource, (const char* url_ptr), {
         return null;
     }
 
-    let response = req.responseText;
-    let len = lengthBytesUTF8(response) + 1;
-    let buf = _malloc(len);
-    stringToUTF8(response, buf, len);
-    return buf;
+    return allocateUTF8(req.responseText);
 });
 
-static void xsltprocFree(xmlChar* s) {
+static void
+xsltjsFree(xmlChar* s) {
     xmlFree(s);
 }
 
 static xmlParserInputPtr
-xsltprocExternalEntityLoader(const char *filename, const char *ID, xmlParserCtxtPtr ctxt) {
-    const xmlChar* result = (const xmlChar*) xsltprocFetchResource(filename);
+xsltjsExternalEntityLoader(const char *filename, const char *ID, xmlParserCtxtPtr ctxt) {
+    const xmlChar* result = (const xmlChar*) xsltjsFetch(filename);
     if (result == NULL) {
         return NULL;
     }
@@ -108,7 +79,7 @@ xsltprocExternalEntityLoader(const char *filename, const char *ID, xmlParserCtxt
         return NULL;
     }
 
-    inputStream->free = xsltprocFree;
+    inputStream->free = xsltjsFree;
 
     const char* directory = xmlParserGetDirectory(filename);
     inputStream->filename = (char *) xmlCanonicPath((const xmlChar *) filename);
@@ -121,7 +92,7 @@ xsltprocExternalEntityLoader(const char *filename, const char *ID, xmlParserCtxt
 }
 
 static const char*
-xsltProcess(xmlDocPtr doc, xsltStylesheetPtr cur)
+xsltjsProcess(xmlDocPtr doc, xsltStylesheetPtr cur)
 {
     xsltTransformContextPtr ctxt = xsltNewTransformContext(cur, doc);
     if (ctxt == NULL) {
@@ -152,7 +123,8 @@ xsltProcess(xmlDocPtr doc, xsltStylesheetPtr cur)
     return (const char*) out;
 }
 
-EMSCRIPTEN_KEEPALIVE const char* transform(const char *xslFilename, const char *xml)
+EMSCRIPTEN_KEEPALIVE const char*
+xsltTransform(const char *xslFilename, const char *xml)
 {
     xsltStylesheetPtr cur = NULL;
     xmlDocPtr doc = NULL;
@@ -168,7 +140,7 @@ EMSCRIPTEN_KEEPALIVE const char* transform(const char *xslFilename, const char *
 
     sec = xsltNewSecurityPrefs();
     xsltSetDefaultSecurityPrefs(sec);
-    xmlSetExternalEntityLoader(xsltprocExternalEntityLoader);
+    xmlSetExternalEntityLoader(xsltjsExternalEntityLoader);
 
     /*
      * Register the EXSLT extensions and the test module
@@ -176,7 +148,7 @@ EMSCRIPTEN_KEEPALIVE const char* transform(const char *xslFilename, const char *
     exsltRegisterAll();
     xsltRegisterTestModule();
 
-    xsl = xsltprocFetchResource(xslFilename);
+    xsl = xsltjsFetch(xslFilename);
     if (xsl == NULL) {
         goto done;
     }
@@ -200,7 +172,7 @@ EMSCRIPTEN_KEEPALIVE const char* transform(const char *xslFilename, const char *
         goto done;
     }
 
-    output = xsltProcess(doc, cur);
+    output = xsltjsProcess(doc, cur);
 done:
     if (cur != NULL)
     {
