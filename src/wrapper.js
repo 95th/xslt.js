@@ -1,4 +1,4 @@
-const Xslt = (function() {
+var Xslt = (function() {
     let Module = {};
 
     /* XSLT.RAW.JS */

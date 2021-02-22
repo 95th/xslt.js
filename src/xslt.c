@@ -48,9 +48,9 @@ static int options = XSLT_PARSE_OPTIONS;
  * Entity loading control and customization.
  */
 
-EM_JS(const char*, xsltjsFetch, (const char* url_ptr), {
-    let url = UTF8ToString(url_ptr);
-    let req = new XMLHttpRequest();
+EM_JS(char*, xsltjsFetch, (const char* urlPtr), {
+    const url = UTF8ToString(urlPtr);
+    const req = new XMLHttpRequest();
     req.open("GET", url, false);
     req.send();
 
@@ -75,7 +75,7 @@ xsltjsExternalEntityLoader(const char *filename, const char *ID, xmlParserCtxtPt
 
     xmlParserInputPtr inputStream = xmlNewStringInputStream(ctxt, result);
     if (inputStream == NULL) {
-        xmlFree((xmlChar*) result);
+        xmlFree(BAD_CAST result);
         return NULL;
     }
 
@@ -153,7 +153,7 @@ xsltTransform(const char *xslFilename, const char *xml)
         goto done;
     }
 
-    style = xmlReadMemory(xsl, strlen(xsl), "doc.xslt", NULL, options);
+    style = xmlReadMemory(xsl, strlen(xsl), xslFilename, NULL, options);
     if (style == NULL) {
         printf("unable to parse XSLT\n");
         cur = NULL;
@@ -185,6 +185,5 @@ done:
     xsltFreeSecurityPrefs(sec);
     xsltCleanupGlobals();
     xmlCleanupParser();
-    xmlMemoryDump();
     return output;
 }
