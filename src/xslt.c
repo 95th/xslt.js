@@ -165,7 +165,7 @@ xsltTransform(const char *xslFilename, const char *xml)
         goto done;
     }
 
-    doc = xmlReadMemory(xml, strlen(xml), "doc.xml", NULL, options);
+    doc = xmlReadMemory(xml, strlen(xml), "[XML]", NULL, options);
     if (doc == NULL)
     {
         printf("unable to parse XML\n");
