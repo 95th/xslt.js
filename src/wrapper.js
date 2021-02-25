@@ -1,10 +1,13 @@
-var Xslt = (function() {
-    let Module = {};
+var Xslt = {
+    transform: () => { throw "XSLT engine not initialized" }
+};
 
+(async () => {
     /* XSLT.RAW.JS */
 
-    return Object.freeze({
-        transform: function (xsltFile, xml) {
+    let module = await createXsltModule();
+    Xslt = Object.freeze({
+        transform: (xsltFile, xml) => {
             if (!xsltFile) {
                 throw "Empty XSLT file name";
             }
@@ -13,20 +16,20 @@ var Xslt = (function() {
                 throw "Empty XML String";
             }
 
-            var xsl_ptr = Module.allocateUTF8(xsltFile);
-            var xml_ptr = Module.allocateUTF8(xml);
+            var xsl_ptr = module.allocateUTF8(xsltFile);
+            var xml_ptr = module.allocateUTF8(xml);
             try {
-                var output_ptr = Module._xsltTransform(xsl_ptr, xml_ptr);
+                var output_ptr = module._xsltTransform(xsl_ptr, xml_ptr);
                 if (!output_ptr) {
                     throw "Transformation failed";
                 }
 
-                let output = Module.UTF8ToString(output_ptr);
-                Module._free(output_ptr);
+                let output = module.UTF8ToString(output_ptr);
+                module._free(output_ptr);
                 return output;
             } finally {
-                Module._free(xsl_ptr);
-                Module._free(xml_ptr);
+                module._free(xsl_ptr);
+                module._free(xml_ptr);
             }
         }
     });
