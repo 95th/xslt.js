@@ -1,13 +1,17 @@
 # Build libxml2
 cd libxml2
-emmake make
+emmake make libxml2.la
 cd ..
 
 
 # Build libxslt
-cd libxslt
-emmake make
-cd ..
+cd libxslt/libxslt
+emmake make libxslt.la
+cd ../..
+
+cd libxslt/libexslt
+emmake make libexslt.la
+cd ../..
 
 emcc -O3 --closure=1 \
     -Ilibxml2/include \
