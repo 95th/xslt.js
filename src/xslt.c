@@ -49,8 +49,8 @@ static int options = XSLT_PARSE_OPTIONS;
  */
 
 EM_JS(char*, xsltjsFetch, (const char* urlPtr), {
-    const url = UTF8ToString(urlPtr);
-    const req = new XMLHttpRequest();
+    var url = UTF8ToString(urlPtr);
+    var req = new XMLHttpRequest();
     req.open("GET", url, false);
     req.send();
 
