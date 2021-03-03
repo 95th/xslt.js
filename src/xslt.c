@@ -48,13 +48,14 @@ static int options = XSLT_PARSE_OPTIONS;
  * Entity loading control and customization.
  */
 
-EM_JS(char*, xsltjsFetch, (const char* urlPtr), {
+EM_JS(char *, xsltJsDownloadFile, (const char *urlPtr), {
     var url = UTF8ToString(urlPtr);
     var req = new XMLHttpRequest();
     req.open("GET", url, false);
     req.send();
 
-    if (req.status != 200) {
+    if (req.status != 200)
+    {
         return null;
     }
 
@@ -62,76 +63,112 @@ EM_JS(char*, xsltjsFetch, (const char* urlPtr), {
 });
 
 static void
-xsltjsFree(xmlChar* s) {
+xsltJsFree(xmlChar *s)
+{
     xmlFree(s);
 }
 
 static xmlParserInputPtr
-xsltjsExternalEntityLoader(const char *filename, const char *ID, xmlParserCtxtPtr ctxt) {
-    const xmlChar* result = (const xmlChar*) xsltjsFetch(filename);
-    if (result == NULL) {
+xsltJsEntityLoader(const char *filename, const char *ID, xmlParserCtxtPtr ctxt)
+{
+    const xmlChar *result = (const xmlChar *)xsltJsDownloadFile(filename);
+    if (result == NULL)
+    {
         return NULL;
     }
 
-    xmlParserInputPtr inputStream = xmlNewStringInputStream(ctxt, result);
-    if (inputStream == NULL) {
+    xmlParserInputPtr input = xmlNewStringInputStream(ctxt, result);
+    if (input == NULL)
+    {
         xmlFree(BAD_CAST result);
         return NULL;
     }
 
-    inputStream->free = xsltjsFree;
+    input->free = xsltJsFree;
+    const char *directory = xmlParserGetDirectory(filename);
+    input->filename = (char *)xmlCanonicPath((const xmlChar *)filename);
+    input->directory = directory;
 
-    const char* directory = xmlParserGetDirectory(filename);
-    inputStream->filename = (char *) xmlCanonicPath((const xmlChar *) filename);
-    inputStream->directory = directory;
-
-    if ((ctxt->directory == NULL) && (directory != NULL)) {
-        ctxt->directory = (char *) xmlStrdup((const xmlChar *) directory);
+    if ((ctxt->directory == NULL) && (directory != NULL))
+    {
+        ctxt->directory = (char *)xmlStrdup((const xmlChar *)directory);
     }
-    return(inputStream);
+
+    return input;
 }
 
-static const char*
-xsltjsProcess(xmlDocPtr doc, xsltStylesheetPtr cur)
+static xmlChar *
+xsltJsResultToString(xmlDocPtr result, xsltStylesheetPtr style)
 {
-    xsltTransformContextPtr ctxt = xsltNewTransformContext(cur, doc);
-    if (ctxt == NULL) {
+    const xmlBufferPtr buf = xmlBufferCreate();
+    if (buf == NULL)
+    {
         return NULL;
     }
+
+    const xmlOutputBufferPtr out_buf = xmlOutputBufferCreateBuffer(buf, NULL);
+    xsltSaveResultTo(out_buf, result, style);
+
+    xmlChar *mem;
+    if (out_buf->conv != NULL)
+    {
+        int size = xmlBufUse(out_buf->conv);
+        mem = xmlStrndup(xmlBufContent(out_buf->conv), size);
+    }
+    else
+    {
+        int size = xmlBufUse(out_buf->buffer);
+        mem = xmlStrndup(xmlBufContent(out_buf->buffer), size);
+    }
+
+    xmlOutputBufferClose(out_buf);
+    return mem;
+}
+
+static const char *
+xsltJsApplyXslt(xmlDocPtr xml_doc, xsltStylesheetPtr style)
+{
+    xsltTransformContextPtr ctxt = xsltNewTransformContext(style, xml_doc);
+    if (ctxt == NULL)
+    {
+        return NULL;
+    }
+
     xsltSetCtxtParseOptions(ctxt, options);
-    
-    xmlDocPtr res = xsltApplyStylesheetUser(cur, doc, NULL, NULL, NULL, ctxt);
-    if (ctxt->state == XSLT_STATE_ERROR) {
+
+    xmlDocPtr res = xsltApplyStylesheetUser(style, xml_doc, NULL, NULL, NULL, ctxt);
+    if (ctxt->state == XSLT_STATE_ERROR)
+    {
         printf("Transformation in error state\n");
-    } else if (ctxt->state == XSLT_STATE_STOPPED) {
+    }
+    else if (ctxt->state == XSLT_STATE_STOPPED)
+    {
         printf("Transformation in stopped state\n");
     }
-    xsltFreeTransformContext(ctxt);
 
-    xmlFreeDoc(doc);
-    if (res == NULL) {
+    xsltFreeTransformContext(ctxt);
+    xmlFreeDoc(xml_doc);
+
+    if (res == NULL)
+    {
         printf("no result\n");
         return NULL;
     }
 
-    xmlChar* out = NULL;
-    int size = 0;
-    // TODO: See xsltSaveToFile to figure out output method
-    htmlDocDumpMemory(res, &out, &size);
-
+    xmlChar *out = xsltJsResultToString(res, style);
     xmlFreeDoc(res);
-    return (const char*) out;
+    return (const char *)out;
 }
 
-EMSCRIPTEN_KEEPALIVE const char*
-xsltTransform(const char *xslFilename, const char *xml)
+EMSCRIPTEN_KEEPALIVE const char *
+xsltJsTransform(const char *xsl_filename, const char *xml)
 {
-    xsltStylesheetPtr cur = NULL;
-    xmlDocPtr doc = NULL;
-    xmlDocPtr style = NULL;
+    xsltStylesheetPtr style = NULL;
+    xmlDocPtr xml_doc = NULL;
+    xmlDocPtr xsl_doc = NULL;
     xsltSecurityPrefsPtr sec = NULL;
-    const char* output = NULL;
-    const char* xsl = NULL;
+    const char *output = NULL;
+    const char *xsl = NULL;
 
     srand(time(NULL));
     xmlInitMemory();
@@ -140,7 +177,7 @@ xsltTransform(const char *xslFilename, const char *xml)
 
     sec = xsltNewSecurityPrefs();
     xsltSetDefaultSecurityPrefs(sec);
-    xmlSetExternalEntityLoader(xsltjsExternalEntityLoader);
+    xmlSetExternalEntityLoader(xsltJsEntityLoader);
 
     /*
      * Register the EXSLT extensions and the test module
@@ -148,40 +185,45 @@ xsltTransform(const char *xslFilename, const char *xml)
     exsltRegisterAll();
     xsltRegisterTestModule();
 
-    xsl = xsltjsFetch(xslFilename);
-    if (xsl == NULL) {
+    xsl = xsltJsDownloadFile(xsl_filename);
+    if (xsl == NULL)
+    {
         goto done;
     }
 
-    style = xmlReadMemory(xsl, strlen(xsl), xslFilename, NULL, options);
-    if (style == NULL) {
+    xsl_doc = xmlReadMemory(xsl, strlen(xsl), xsl_filename, NULL, options);
+    if (xsl_doc == NULL)
+    {
         printf("unable to parse XSLT\n");
-        cur = NULL;
+        style = NULL;
         goto done;
     }
 
-    cur = xsltParseStylesheetDoc(style);
-    if (cur == NULL || cur->errors != 0) {
+    style = xsltParseStylesheetDoc(xsl_doc);
+    if (style == NULL || style->errors != 0)
+    {
         goto done;
     }
 
-    doc = xmlReadMemory(xml, strlen(xml), "[XML]", NULL, options);
-    if (doc == NULL)
+    xml_doc = xmlReadMemory(xml, strlen(xml), "[XML]", NULL, options);
+    if (xml_doc == NULL)
     {
         printf("unable to parse XML\n");
         goto done;
     }
 
-    output = xsltjsProcess(doc, cur);
+    output = xsltJsApplyXslt(xml_doc, style);
 done:
-    if (cur != NULL)
+    if (style != NULL)
     {
-        xsltFreeStylesheet(cur);
+        xsltFreeStylesheet(style);
     }
+
     if (xsl != NULL)
     {
         xmlFree(BAD_CAST xsl);
     }
+
     xsltFreeSecurityPrefs(sec);
     xsltCleanupGlobals();
     xmlCleanupParser();
