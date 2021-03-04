@@ -102,34 +102,6 @@ xsltJsEntityLoader(const char *filename, const char *ID, xmlParserCtxtPtr ctxt)
     return input;
 }
 
-static xmlChar *
-xsltJsResultToString(xmlDocPtr result, xsltStylesheetPtr style)
-{
-    const xmlBufferPtr buf = xmlBufferCreate();
-    if (buf == NULL)
-    {
-        return NULL;
-    }
-
-    const xmlOutputBufferPtr out_buf = xmlOutputBufferCreateBuffer(buf, NULL);
-    xsltSaveResultTo(out_buf, result, style);
-
-    xmlChar *mem;
-    if (out_buf->conv != NULL)
-    {
-        int size = xmlBufUse(out_buf->conv);
-        mem = xmlStrndup(xmlBufContent(out_buf->conv), size);
-    }
-    else
-    {
-        int size = xmlBufUse(out_buf->buffer);
-        mem = xmlStrndup(xmlBufContent(out_buf->buffer), size);
-    }
-
-    xmlOutputBufferClose(out_buf);
-    return mem;
-}
-
 static const char *
 xsltJsApplyXslt(xmlDocPtr xml_doc, xsltStylesheetPtr style)
 {
@@ -160,7 +132,9 @@ xsltJsApplyXslt(xmlDocPtr xml_doc, xsltStylesheetPtr style)
         return NULL;
     }
 
-    xmlChar *out = xsltJsResultToString(res, style);
+    xmlChar* out;
+    int size;
+    xsltSaveResultToString(&out, &size, res, style);
     xmlFreeDoc(res);
     return (const char *)out;
 }
