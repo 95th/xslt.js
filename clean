@@ -1,9 +1,0 @@
-rm -rf build
-
-cd libxml2
-git clean -fdx
-cd ..
-
-cd libxslt
-git clean -fdx
-cd ..

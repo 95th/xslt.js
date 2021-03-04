@@ -71,6 +71,11 @@ xsltJsFree(xmlChar *s)
 static xmlParserInputPtr
 xsltJsEntityLoader(const char *filename, const char *ID, xmlParserCtxtPtr ctxt)
 {
+    if (ID)
+    {
+        // Just to ignore unused parameter warning
+    }
+
     const xmlChar *result = (const xmlChar *)xsltJsDownloadFile(filename);
     if (result == NULL)
     {
