@@ -1,8 +1,4 @@
-LIB_XML = libxml2/.libs/libxml2.a
-LIB_XSLT = libxslt/libxslt/.libs/libxslt.a 
-LIB_EXSLT = libxslt/libexslt/.libs/libexslt.a
-
-build/xslt.js: build/xslt.o $(LIB_XML) $(LIB_XSLT) $(LIB_EXSLT)
+build/xslt.js: build/xslt.o libs
 	@echo "  CCLD     xslt.js"
 	@emcc -O3 --closure=1 \
 		-s ALLOW_MEMORY_GROWTH=1 \
@@ -11,25 +7,21 @@ build/xslt.js: build/xslt.o $(LIB_XML) $(LIB_XSLT) $(LIB_EXSLT)
 		-s "EXPORTED_FUNCTIONS=['_malloc', '_free']" \
 		-s "EXTRA_EXPORTED_RUNTIME_METHODS=['allocateUTF8', 'UTF8ToString']" \
 		build/xslt.o \
-		$(LIB_XML) \
-		$(LIB_XSLT) \
-		$(LIB_EXSLT) \
+		libxml2/.libs/libxml2.a \
+		libxslt/libxslt/.libs/libxslt.a  \
+		libxslt/libexslt/.libs/libexslt.a \
 		-o build/xslt.js
 	@sed -e '/\/\* XSLT.RAW.JS \*\// {r build/xslt.js' -e 'd}' < src/wrapper.js > build/xslt.new.js
 	@mv build/xslt.new.js build/xslt.js
 
-build/xslt.o: src/xslt.c $(LIB_XML) $(LIB_XSLT) $(LIB_EXSLT)
+build/xslt.o: src/xslt.c libs
 	@echo "  CC       xslt.o"
 	@emcc -O3 -Wall -Wextra src/xslt.c -c -o build/xslt.o -Ilibxml2/include -Ilibxslt
 
-$(LIB_EXSLT): $(LIB_XML) $(LIB_XSLT)
-	@$(MAKE) libexslt.la -C libxslt/libexslt
-	
-$(LIB_XSLT): $(LIB_XML)
-	@$(MAKE) libxslt.la -C libxslt/libxslt
-
-$(LIB_XML):
+libs:
 	@$(MAKE) libxml2.la -C libxml2
+	@$(MAKE) libxslt.la -C libxslt/libxslt
+	@$(MAKE) libexslt.la -C libxslt/libexslt
 
 clean:
 	@$(MAKE) clean -C libxml2
@@ -37,4 +29,4 @@ clean:
 	@$(MAKE) clean -C libxslt/libexslt
 	@rm -f build/*
 
-.PHONY: clean
+.PHONY: clean libs
