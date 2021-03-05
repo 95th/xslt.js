@@ -5,7 +5,12 @@ build/xslt.js: build/xslt.o libs
 		-s INITIAL_MEMORY=64MB \
 		-s MAXIMUM_MEMORY=1024MB \
 		-s "EXPORTED_FUNCTIONS=['_malloc', '_free']" \
-		-s "EXTRA_EXPORTED_RUNTIME_METHODS=['allocateUTF8', 'UTF8ToString']" \
+		-s "EXTRA_EXPORTED_RUNTIME_METHODS=['allocateUTF8', 'UTF8ToString', 'cwrap', 'ccall']" \
+		-s ASYNCIFY=1 \
+		-s "ASYNCIFY_IMPORTS=['xsltJsDownloadFile']" \
+		-s MODULARIZE=1 \
+		-s "EXPORT_NAME='createXsltModule'" \
+		-s ENVIRONMENT=web \
 		build/xslt.o \
 		libxml2/.libs/libxml2.a \
 		libxslt/libxslt/.libs/libxslt.a  \
