@@ -1,6 +1,6 @@
 build/xslt.js: build/xslt.o libs
 	@echo "  CCLD     xslt.js"
-	@emcc -O3 --closure=1 \
+	@emcc -Oz --closure=1 -flto \
 		-s ALLOW_MEMORY_GROWTH=1 \
 		-s INITIAL_MEMORY=8MB \
 		-s MAXIMUM_MEMORY=1024MB \
@@ -21,12 +21,12 @@ build/xslt.js: build/xslt.o libs
 
 build/xslt.o: src/xslt.c libs
 	@echo "  CC       xslt.o"
-	@emcc -O3 -Wall -Wextra src/xslt.c -c -o build/xslt.o -Ilibxml2/include -Ilibxslt
+	@emcc -Oz -flto -Wall -Wextra src/xslt.c -c -o build/xslt.o -Ilibxml2/include -Ilibxslt
 
 libs:
-	@$(MAKE) libxml2.la -C libxml2
-	@$(MAKE) libxslt.la -C libxslt/libxslt
-	@$(MAKE) libexslt.la -C libxslt/libexslt
+	@$(MAKE) libxml2.la -j4 -C libxml2
+	@$(MAKE) libxslt.la -j4 -C libxslt/libxslt
+	@$(MAKE) libexslt.la -j4 -C libxslt/libexslt
 
 clean:
 	@$(MAKE) clean -C libxml2
