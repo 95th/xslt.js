@@ -9,7 +9,7 @@ build/xslt.js: build/xslt.o libs
 		-s ASYNCIFY=1 \
 		-s "ASYNCIFY_IMPORTS=['xsltJsDownloadFile']" \
 		-s MODULARIZE=1 \
-		-s "EXPORT_NAME='createXsltRawModule'" \
+		-s "EXPORT_NAME='newXsltModule'" \
 		-s ENVIRONMENT=web \
 		build/xslt.o \
 		libxml2/.libs/libxml2.a \
