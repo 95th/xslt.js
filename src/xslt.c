@@ -44,23 +44,25 @@
 
 static int options = XSLT_PARSE_OPTIONS;
 
+// clang-format off
+
 /*
  * Entity loading control and customization.
  */
-
 EM_JS(char *, xsltJsDownloadFile, (const char *urlPtr), {
-    var url = UTF8ToString(urlPtr);
-    var req = new XMLHttpRequest();
-    req.open("GET", url, false);
-    req.send();
+    return Asyncify.handleAsync(async () => {
+        let url = UTF8ToString(urlPtr);
+        let res = await fetch(url);
+        if (res.status != 200) {
+            return null;
+        }
 
-    if (req.status != 200)
-    {
-        return null;
-    }
-
-    return allocateUTF8(req.responseText);
+        let text = await res.text();
+        return allocateUTF8(text);
+    });
 });
+
+// clang-format on
 
 static void
 xsltJsFree(xmlChar *s)
@@ -132,7 +134,7 @@ xsltJsApplyXslt(xmlDocPtr xml_doc, xsltStylesheetPtr style)
         return NULL;
     }
 
-    xmlChar* out;
+    xmlChar *out;
     int size;
     xsltSaveResultToString(&out, &size, res, style);
     xmlFreeDoc(res);
