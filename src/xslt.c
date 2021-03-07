@@ -49,16 +49,15 @@ static int options = XSLT_PARSE_OPTIONS;
  * Entity loading control and customization.
  */
 EM_JS(char *, xsltJsDownloadFile, (const char *urlPtr), {
-    return Asyncify.handleAsync(async () => {
-        let url = UTF8ToString(urlPtr);
-        let res = await fetch(url);
-        if (res.status != 200) {
-            return null;
-        }
+    let url = UTF8ToString(urlPtr);
+    let req = new XMLHttpRequest();
+    req.open("GET", url, false);
+    req.send();
+    if (req.status != 200) {
+        return null;
+    }
 
-        let text = await res.text();
-        return allocateUTF8(text);
-    });
+    return allocateUTF8(req.responseText);
 });
 
 // clang-format on
