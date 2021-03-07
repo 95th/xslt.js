@@ -8,9 +8,8 @@
  */
 
 #include <emscripten/emscripten.h>
-#include "libxslt/libxslt.h"
-#include "libxslt/xsltconfig.h"
-#include "libexslt/exslt.h"
+#include <libxslt/libxslt.h>
+#include <libxslt/xsltconfig.h>
 #include <stdio.h>
 #ifdef HAVE_STRING_H
 #include <string.h>
@@ -36,13 +35,13 @@
 #include <libxslt/extensions.h>
 #include <libxslt/security.h>
 
-#include <libexslt/exsltconfig.h>
-
 #ifdef HAVE_SYS_TIMEB_H
 #include <sys/timeb.h>
 #endif
 
 static int options = XSLT_PARSE_OPTIONS;
+
+#define UNUSED(x) (void)(x)
 
 // clang-format off
 
@@ -73,10 +72,7 @@ xsltJsFree(xmlChar *s)
 static xmlParserInputPtr
 xsltJsEntityLoader(const char *filename, const char *ID, xmlParserCtxtPtr ctxt)
 {
-    if (ID)
-    {
-        // Just to ignore unused parameter warning
-    }
+    UNUSED(ID);
 
     const xmlChar *result = (const xmlChar *)xsltJsDownloadFile(filename);
     if (result == NULL)
@@ -159,12 +155,6 @@ xsltJsTransform(const char *xsl_filename, const char *xml)
     sec = xsltNewSecurityPrefs();
     xsltSetDefaultSecurityPrefs(sec);
     xmlSetExternalEntityLoader(xsltJsEntityLoader);
-
-    /*
-     * Register the EXSLT extensions and the test module
-     */
-    exsltRegisterAll();
-    xsltRegisterTestModule();
 
     xsl = xsltJsDownloadFile(xsl_filename);
     if (xsl == NULL)
