@@ -10,7 +10,6 @@ build/xslt.js: build/xslt.o libs
 		build/xslt.o \
 		libxml2/.libs/libxml2.a \
 		libxslt/libxslt/.libs/libxslt.a  \
-		libxslt/libexslt/.libs/libexslt.a \
 		-o build/xslt.js
 	@sed -e '/\/\* XSLT.RAW.JS \*\// {r build/xslt.js' -e 'd}' < src/wrapper.js > build/xslt.new.js
 	@mv build/xslt.new.js build/xslt.js
@@ -22,12 +21,10 @@ build/xslt.o: src/xslt.c libs
 libs:
 	@$(MAKE) libxml2.la -j4 -C libxml2
 	@$(MAKE) libxslt.la -j4 -C libxslt/libxslt
-	@$(MAKE) libexslt.la -j4 -C libxslt/libexslt
 
 clean:
 	@$(MAKE) clean -C libxml2
 	@$(MAKE) clean -C libxslt/libxslt
-	@$(MAKE) clean -C libxslt/libexslt
 	@rm -f build/*
 
 .PHONY: clean libs
