@@ -49,8 +49,8 @@ static int options = XSLT_PARSE_OPTIONS;
  * Entity loading control and customization.
  */
 EM_JS(char *, xsltJsDownloadFile, (const char *urlPtr), {
-    let url = UTF8ToString(urlPtr);
-    let req = new XMLHttpRequest();
+    const url = UTF8ToString(urlPtr);
+    const req = new XMLHttpRequest();
     req.open("GET", url, false);
     req.send();
     if (req.status != 200) {

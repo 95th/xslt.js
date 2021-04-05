@@ -12,15 +12,15 @@ var xsltTransform = (function () {
             throw "Empty XML String";
         }
 
-        let xsltPtr = Module.allocateUTF8(xsltFile);
-        let xmlPtr = Module.allocateUTF8(xml);
+        var xsltPtr = Module.allocateUTF8(xsltFile);
+        var xmlPtr = Module.allocateUTF8(xml);
         try {
-            let outputPtr = Module._xsltJsTransform(xsltPtr, xmlPtr);
+            var outputPtr = Module._xsltJsTransform(xsltPtr, xmlPtr);
             if (!outputPtr) {
                 throw "Transformation failed";
             }
 
-            let output = Module.UTF8ToString(outputPtr);
+            var output = Module.UTF8ToString(outputPtr);
             Module._free(outputPtr);
             return output;
         } finally {
