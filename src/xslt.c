@@ -10,7 +10,6 @@
 #include <emscripten/emscripten.h>
 #include <libxslt/libxslt.h>
 #include <libxslt/xsltconfig.h>
-#include <stdio.h>
 #ifdef HAVE_STRING_H
 #include <string.h>
 #endif
@@ -40,6 +39,7 @@
 #endif
 
 static int options = XSLT_PARSE_OPTIONS;
+static const char *last_err = NULL;
 
 #define UNUSED(x) (void)(x)
 
@@ -113,11 +113,11 @@ xsltJsApplyXslt(xmlDocPtr xml_doc, xsltStylesheetPtr style)
     xmlDocPtr res = xsltApplyStylesheetUser(style, xml_doc, NULL, NULL, NULL, ctxt);
     if (ctxt->state == XSLT_STATE_ERROR)
     {
-        printf("Transformation in error state\n");
+        last_err = "Transformation in error state";
     }
     else if (ctxt->state == XSLT_STATE_STOPPED)
     {
-        printf("Transformation in stopped state\n");
+        last_err = "Transformation in stopped state";
     }
 
     xsltFreeTransformContext(ctxt);
@@ -125,7 +125,7 @@ xsltJsApplyXslt(xmlDocPtr xml_doc, xsltStylesheetPtr style)
 
     if (res == NULL)
     {
-        printf("no result\n");
+        last_err = "No transformation result";
         return NULL;
     }
 
@@ -145,6 +145,7 @@ xsltJsTransform(const char *xsl_filename, const char *xml)
     xsltSecurityPrefsPtr sec = NULL;
     const char *output = NULL;
     const char *xsl = NULL;
+    last_err = NULL;
 
     srand(time(NULL));
     xmlInitMemory();
@@ -158,13 +159,14 @@ xsltJsTransform(const char *xsl_filename, const char *xml)
     xsl = xsltJsDownloadFile(xsl_filename);
     if (xsl == NULL)
     {
+        last_err = "Could not access XSLT";
         goto done;
     }
 
     xsl_doc = xmlReadMemory(xsl, strlen(xsl), xsl_filename, NULL, options);
     if (xsl_doc == NULL)
     {
-        printf("unable to parse XSLT\n");
+        last_err = "Unable to parse XSLT";
         style = NULL;
         goto done;
     }
@@ -172,13 +174,14 @@ xsltJsTransform(const char *xsl_filename, const char *xml)
     style = xsltParseStylesheetDoc(xsl_doc);
     if (style == NULL || style->errors != 0)
     {
+        last_err = "Errors in XSLT Stylesheet";
         goto done;
     }
 
     xml_doc = xmlReadMemory(xml, strlen(xml), "[XML]", NULL, options);
     if (xml_doc == NULL)
     {
-        printf("unable to parse XML\n");
+        last_err = "Unable to parse XML string";
         goto done;
     }
 
@@ -198,4 +201,10 @@ done:
     xsltCleanupGlobals();
     xmlCleanupParser();
     return output;
+}
+
+EMSCRIPTEN_KEEPALIVE const char *
+xsltJsLastError()
+{
+    return last_err;
 }

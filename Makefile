@@ -7,6 +7,8 @@ build/xslt.js: build/xslt.o libs
 		-s "EXPORTED_FUNCTIONS=['_malloc', '_free']" \
 		-s "EXTRA_EXPORTED_RUNTIME_METHODS=['allocateUTF8', 'UTF8ToString', 'cwrap', 'ccall']" \
 		-s ENVIRONMENT=web \
+		-s MODULARIZE=1 \
+		-s "EXPORT_NAME='createXsltModule'" \
 		build/xslt.o \
 		libxml2/.libs/libxml2.a \
 		libxslt/libxslt/.libs/libxslt.a  \
