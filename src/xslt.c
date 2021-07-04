@@ -49,15 +49,19 @@ static const char *last_err = NULL;
  * Entity loading control and customization.
  */
 EM_JS(char *, xsltJsDownloadFile, (const char *urlPtr), {
-    const url = UTF8ToString(urlPtr);
-    const req = new XMLHttpRequest();
-    req.open("GET", url, false);
-    req.send();
-    if (req.status != 200) {
-        return null;
-    }
-
-    return allocateUTF8(req.responseText);
+    return Asyncify.handleAsync(async () => {
+        const url = UTF8ToString(urlPtr);
+        try {
+            const response = await fetch(url);
+            if (response.status != 200) {
+                return null;
+            }
+            const text = await response.text();
+            return allocateUTF8(text);
+        } catch (e) {
+            return null;
+        }
+    });
 });
 
 // clang-format on

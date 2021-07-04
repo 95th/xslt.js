@@ -1,3 +1,5 @@
+export EMCC_CLOSURE_ARGS = --externs src/externs.js
+
 build/xslt.js: build/xslt.o libs
 	@echo "  CCLD     xslt.js"
 	@emcc -Oz -flto --closure=1 \
@@ -5,10 +7,12 @@ build/xslt.js: build/xslt.o libs
 		-s INITIAL_MEMORY=8MB \
 		-s MAXIMUM_MEMORY=1024MB \
 		-s "EXPORTED_FUNCTIONS=['_malloc', '_free']" \
-		-s "EXTRA_EXPORTED_RUNTIME_METHODS=['allocateUTF8', 'UTF8ToString', 'cwrap', 'ccall']" \
+		-s "EXPORTED_RUNTIME_METHODS=['allocateUTF8', 'UTF8ToString', 'cwrap', 'ccall']" \
 		-s ENVIRONMENT=web \
 		-s MODULARIZE=1 \
 		-s "EXPORT_NAME='createXsltModule'" \
+		-s ASYNCIFY=1 \
+		-s "ASYNCIFY_IMPORTS=['xsltJsDownloadFile']" \
 		build/xslt.o \
 		libxml2/.libs/libxml2.a \
 		libxslt/libxslt/.libs/libxslt.a  \

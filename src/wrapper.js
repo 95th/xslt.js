@@ -1,9 +1,15 @@
 class XsltEngine {
   constructor(mod) {
     this.mod = mod;
+    this._transform = mod.cwrap(
+      "xsltJsTransform",
+      "number",
+      ["number", "number"],
+      { async: true }
+    );
   }
 
-  transform(xsltFile, xml) {
+  async transform(xsltFile, xml) {
     if (!xsltFile) {
       throw "Empty XSLT file name";
     }
@@ -16,9 +22,9 @@ class XsltEngine {
     const xmlPtr = this.mod.allocateUTF8(xml);
 
     try {
-      const outputPtr = this.mod._xsltJsTransform(xsltPtr, xmlPtr);
+      const outputPtr = await this._transform(xsltPtr, xmlPtr);
       if (outputPtr === 0) {
-        const errPtr = this.mode._xsltJsLastError();
+        const errPtr = this.mod._xsltJsLastError();
         if (errPtr === 0) {
           return "";
         }
